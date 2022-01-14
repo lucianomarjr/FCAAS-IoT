@@ -111,6 +111,28 @@ def send_access(data):
     return pickle.loads(response)
 
 
+def receive_context():
+    """
+        Recebe os dados criptografados enviados do EA.
+        Input: none
+        Output: contexto criptografado.
+    """
+
+    host = 'localhost'
+    port = 50004
+
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.bind((host, port))
+    sock.listen(1)
+    print('Waiting for context...')
+    connection, address = sock.accept()
+    context = connection.recv(1024)
+    context = pickle.loads(context)
+    sock.close()
+
+    return context
+
+
 def request_context(connection, request, evaluation):
     """
         Realiza solicitação de contexto para o CM.
@@ -151,27 +173,6 @@ def request_context(connection, request, evaluation):
     return response_context
 
 
-def receive_context():
-    """
-        Recebe os dados criptografados enviados do EA.
-        Input: none
-        Output: contexto criptografado.
-    """
-
-    host = 'localhost'
-    port = 50004
-
-    sock = socket(AF_INET, SOCK_STREAM)
-    sock.bind((host, port))
-    sock.listen(1)
-    print('Waiting for context...')
-    connection, address = sock.accept()
-    context = connection.recv(1024)
-    context = pickle.loads(context)
-    sock.close()
-
-    return context
-
 def main():
     host = 'localhost'
     port = 50003
@@ -191,6 +192,20 @@ def main():
         resource = get_resource(request)
 
         access_request = access_composer(subject, resource, context)
+
+        evaluation = send_access(access_request)
+
+        if evaluation == 'Deny':
+            msg = 'Access Denied.'
+            sock.sendto(msg.encode(), address)
+            sock.close()
+
+        else:
+            print('Requisitando context...')
+            context = request_context(address, access_request, evaluation)
+            context = pickle.dumps(context)
+            sock.sendto(context, address)
+            sock.close()
 
 
 if __name__ == '__main__':
