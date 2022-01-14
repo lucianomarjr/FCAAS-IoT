@@ -90,6 +90,88 @@ def access_composer(subject, resource, context):
     return access_request
 
 
+def send_access(data):
+    """
+        Envia a mensagem com os atributos para o PDA.
+        Input: json no formato Access Request.
+        Ouput: resposta PDA.
+    """
+
+    host = 'localhost'
+    port = 50000
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect((host, port))
+    print('Conexão com PDA estabelecida!')
+
+    access_request = pickle.dumps(data)
+    sock.send(access_request)
+    response = sock.recv(1024)
+    sock.close()
+
+    return pickle.loads(response)
+
+
+def request_context(connection, request, evaluation):
+    """
+        Realiza solicitação de contexto para o CM.
+        Input: socket, especificação de contexto requerido e resultado da avaliação do PDA.
+        Output: contexto criptografado enviado pelo EA.
+    """
+
+    host = 'localhost'
+    port = 50006
+
+    source = request.get('resource').get('attributes').get('source')
+    destination = connection
+    context = []
+
+    for data in request.get('resource').get('attributes').get('name'):
+        context.append(data)
+
+    context_request = {
+        'source': source,
+        'context': context,
+        'destination': destination,
+        'crypto': evaluation
+    }
+
+    try:
+        sock = socket(AF_INET, SOCK_STREAM)
+        sock.connect((host, port))
+        print ('Conexão com CM estabelecida!')
+
+        sock.send(pickle.dumps(context_request))
+        sock.close()
+
+    except ConnectionRefusedError:
+        return print('Conexão com CM não foi estabelecida!')
+
+    response_context = receive_context()
+
+    return response_context
+
+
+def receive_context():
+    """
+        Recebe os dados criptografados enviados do EA.
+        Input: none
+        Output: contexto criptografado.
+    """
+
+    host = 'localhost'
+    port = 50004
+
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.bind((host, port))
+    sock.listen(1)
+    print('Waiting for context...')
+    connection, address = sock.accept()
+    context = connection.recv(1024)
+    context = pickle.loads(context)
+    sock.close()
+
+    return context
+
 def main():
     host = 'localhost'
     port = 50003
