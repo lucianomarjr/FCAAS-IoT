@@ -122,11 +122,3 @@ class EncryptionPolicy:
                             flag = False
             else:
                 c += 1
-
-
-
-
-
-
-
-
