@@ -7,21 +7,17 @@ from pymongo import MongoClient
 import base64
 
 
-# def get_key(context_request):
-#     usr = 'bdadmin'
-#     psw = '111293'
-#     client = MongoClient('192.168.1.150', 27017)
-#     db = client.encryption_keys
-#     db.authenticate(usr, psw, source='admin')
-#     keys = db['consumer_1']
-#
-#     key = []
-#
-#     for p in keys.find({"context": context_request}):
-#         key.append(p)
-#         print(key)
-#
-#     dec_key = key[0]
+def get_key(enc_context):
+    usr = 'bdadmin'
+    psw = '111293'
+    client = MongoClient('192.168.1.150', 27017)
+    db = client.encryption_keys
+    #db.authenticate(usr, psw, source='admin')
+    key_register = db.private_keys.find_one({'context': enc_context})
+
+    key = key_register.get('key')
+
+    return key
 
 
 def get_attributes():
@@ -55,15 +51,23 @@ def context_request(attributes):
         return -1
 
 
-def decryption(context):
-    file = 'Testes Encryptação/private_key.bin'
-    key_file = open(file).read()
+def decryption(context, enc_context):
+    # file = 'Testes Encryptação/private_key.bin'
+    # key_file = open(file).read()
+
+    key_file = get_key(enc_context)
     key = RSA.import_key(key_file)
     cipher_rsa = PKCS1_OAEP.new(key)
 
     data = cipher_rsa.decrypt(context)
 
     return pickle.loads(data)
+
+
+# def main():
+#     context = '1'
+#     register = get_key(context)
+#     print(register)
 
 
 def main():
@@ -74,7 +78,8 @@ def main():
         attributes = get_attributes()
         context = context_request(attributes)
         print('A mensagem recebida: {}'.format(context))
-        msg = decryption(context)
+        crypto_context = '1'
+        msg = decryption(context, crypto_context)
         print('A mensagem descriptografada: {}'.format(msg))
 
         print('Context: ')
