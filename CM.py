@@ -94,6 +94,8 @@ def main():
         data = connection.recv(1024)
         data = pickle.loads(data)
 
+        print(data)
+
         context = get_context(data)
 
         context_response = context_compose(context, data)

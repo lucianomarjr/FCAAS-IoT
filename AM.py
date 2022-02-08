@@ -109,6 +109,7 @@ def send_access(data):
     sock.close()
 
     return pickle.loads(response)
+    #return pickle.loads(response)
 
 
 def receive_context():
@@ -150,6 +151,7 @@ def request_context(connection, request, evaluation):
     for data in request.get('resource').get('attributes').get('name'):
         context.append(data)
 
+    print("Evaluation = {}".format(evaluation))
     context_request = {
         'source': source,
         'context': context,
@@ -185,10 +187,11 @@ def main():
         data, address = sock.recvfrom(1024)
         print('Connection received from: IP {}, PORT {}.'.format(address[0],address[1]))
 
-        request = data.decode()
+        #request = data.decode()
+        request = pickle.loads(data)
 
         subject = get_subject(request)
-        context = get_request_context(request)
+        context = get_request_context(request, address, port)
         resource = get_resource(request)
 
         access_request = access_composer(subject, resource, context)
@@ -203,7 +206,9 @@ def main():
         else:
             print('Requisitando context...')
             context = request_context(address, access_request, evaluation)
-            context = pickle.dumps(context)
+            #context = pickle.dumps(context)
+            #teste = pickle.loads(context)
+            #print('Depois do loads: {}'.format(teste))
             sock.sendto(context, address)
             sock.close()
 

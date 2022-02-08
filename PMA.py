@@ -4,36 +4,40 @@ from py_abac.storage.mongo import MongoStorage, MongoMigrationSet
 
 
 class AccessControl:
-
     __usr = 'bdadmin'
     __psw = '111293'
     __client = MongoClient('192.168.1.150', 27017)
     __db = __client.sib
-    __db.authenticate(__usr, __psw, source='admin')
+    # __db.authenticate(__usr, __psw, source='admin')
 
     __storage = MongoStorage(__client, 'sib', collection='accesscontrol')
-    #__storage2 = MongoStorage(__client, 'sib', collection='encryption')
 
+    # __storage2 = MongoStorage(__client, 'sib', collection='encryption')
 
     def save(self, policy_json: Policy):
         policy = Policy.from_json(policy_json)
         MongoStorage.add(policy)
 
-
     def getById(self, id: str):
         return MongoStorage.get(id).to_json()
 
-
     def getAll(self, limit: int, offset: int):
-        data = MongoStorage.get_all(limit,offset)
+        data = MongoStorage.get_all(limit, offset)
         policies = []
         for d in data:
             policies.append(d.to_json())
         return policies
 
+    # def getForTarget(self, subjectId: str, resourceId: str, actionId: str):
+    #     print(subjectId, resourceId, actionId)
+    #     data = MongoStorage.get_for_target(subjectId, resourceId, actionId)
+    #     policies = []
+    #     for d in data:
+    #         policies.append(d.to_json())
+    #     return policies
 
-    def getForTarget(self, subjectId: str, resourceId: str, actionId: str):
-        data = MongoStorage.get_for_target(subjectId, resourceId, actionId)
+    def getForTarget(self, subjectId: str, resourceId: str, actionId: str, isAccessControl: bool):
+        data = MongoStorage.get_for_target(self.verifyIsAccess(isAccessControl), subjectId, resourceId, actionId)
         policies = []
         for d in data:
             policies.append(d.to_json())
@@ -53,6 +57,9 @@ class AccessControl:
     def delete(self, id: str):
         MongoStorage.delete(id)
 
+    def verifyIsAccess(self, isAccessControl):
+        return self.__storage if isAccessControl else None
+
 
 class EncryptionPolicy:
 
@@ -61,16 +68,31 @@ class EncryptionPolicy:
         __psw = '111293'
         __client = MongoClient('192.168.1.150', 27017)
         __db = __client.sib
-        __db.authenticate(__usr, __psw, source='admin')
+        # __db.authenticate(__usr, __psw, source='admin')
 
         self.policies = __db["encryption"]
+
+    def policy_compose(self, key, alg, context, tags):
+
+        enc_policy = {
+            "_id": 1,
+            "tags": tags,
+            "priority": 3,
+            "context": context,
+            "crypto_infor": {
+                "alg": alg,
+                "key": key,
+            }
+        }
+
+        return enc_policy
 
     def getPolicies(self):
         policies_all = []
         for p in self.policies.find():
             policies_all.append(p)
 
-    def getForTarget(self, tags:list):
+    def getForTarget(self, tags: list):
         eval_policies = []
         priority = [3, 2, 1]
         try:

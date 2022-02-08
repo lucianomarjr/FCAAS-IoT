@@ -68,6 +68,8 @@ def main():
         connection, address = sock.accept()
         data = connection.recv(1024)
         data = pickle.loads(data)
+        print(data)
+        print(type(data))
 
         crypto_infor = data.get('crypto')
         crypto_alg = data.get('crypto').get('alg')

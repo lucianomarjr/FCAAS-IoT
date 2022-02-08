@@ -30,9 +30,13 @@ def accessEvaluation(request):
     sib = AccessControl()
     tar_sub = request.get("subject").get("id")
     tar_res = request.get("resource").get("id")
-    tar_action = "get"
+    #tar_action = request.get("action").get("id")
+    tar_action = 'get'
 
-    policies = sib.getForTarget(tar_sub, tar_res, tar_action)
+    print(tar_sub, tar_res, tar_action)
+
+    policies = sib.getForTarget(tar_sub, tar_res, tar_action, True)
+    #policies = sib.getForTarResource(tar_res)
 
     print("Polices has recovered!")
     print("Access control policies analyzed: {}.".format(len(policies)))
@@ -95,7 +99,7 @@ def main():
 
     sock = socket(AF_INET, SOCK_STREAM)
     sock.bind((host, port))
-    sock.listen()
+    sock.listen(1)
     print('PDA is running...')
 
     while True:
@@ -114,6 +118,7 @@ def main():
         else:
             crypto_context = cryptoContext(data.get("context"))
             crypto_infor = cryptoCheck(crypto_context)
+            print(crypto_infor)
             crypto_infor = pickle.dumps(crypto_infor)
             connection.send(crypto_infor)
             print("Evaluation results sent to AM!")
