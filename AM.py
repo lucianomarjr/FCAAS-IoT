@@ -187,7 +187,6 @@ def main():
         data, address = sock.recvfrom(1024)
         print('Connection received from: IP {}, PORT {}.'.format(address[0],address[1]))
 
-        #request = data.decode()
         request = pickle.loads(data)
 
         subject = get_subject(request)
@@ -206,9 +205,6 @@ def main():
         else:
             print('Requisitando context...')
             context = request_context(address, access_request, evaluation)
-            #context = pickle.dumps(context)
-            #teste = pickle.loads(context)
-            #print('Depois do loads: {}'.format(teste))
             sock.sendto(context, address)
             sock.close()
 

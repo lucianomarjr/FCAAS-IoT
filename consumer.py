@@ -48,11 +48,7 @@ def context_request(attributes):
         print("Context request sent!")
 
         response = sock.recv(1024)
-        #response = pickle.loads(response)
-        print('A mensagem recebida: {}'.format(response))
-        #print(response)
 
-        #return pickle.loads(response)
         return response
 
     except ConnectionRefusedError:
@@ -70,9 +66,6 @@ def decryption(context):
     return pickle.loads(data)
 
 
-    #return context
-
-
 def main():
     log = []
     count = 0
@@ -81,9 +74,13 @@ def main():
         attributes = get_attributes()
         context = context_request(attributes)
         print('A mensagem recebida: {}'.format(context))
-        #data = pickle.loads(context)
         msg = decryption(context)
         print('A mensagem descriptografada: {}'.format(msg))
+
+        print('Context: ')
+        for item, value in msg.items():
+            print('{} : {}'.format(item, value))
+
         time.sleep(10)
         count += 1
 
